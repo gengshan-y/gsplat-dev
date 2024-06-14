@@ -629,7 +629,7 @@ fully_fused_projection_fwd_kernel(const uint32_t C, const uint32_t N,
     const uint32_t gid = idx % N; // gaussian id
 
     // shift pointers to the current camera and gaussian
-    means += gid * 3;
+    means += (gid * C + cid) * 3;
     viewmats += cid * 16;
     Ks += cid * 9;
 
@@ -658,7 +658,7 @@ fully_fused_projection_fwd_kernel(const uint32_t C, const uint32_t N,
         );
     } else {
         // compute from quaternions and scales
-        quats += gid * 4;
+        quats += (gid * C + cid) * 4;
         scales += gid * 3;
         quat_scale_to_covar_preci(glm::make_vec4(quats), glm::make_vec3(scales), &covar,
                                   nullptr);
@@ -750,7 +750,7 @@ __global__ void fully_fused_projection_bwd_kernel(
     const uint32_t gid = idx % N; // gaussian id
 
     // shift pointers to the current camera and gaussian
-    means += gid * 3;
+    means += (gid * C + cid) * 3;
     viewmats += cid * 16;
     Ks += cid * 9;
 
@@ -792,7 +792,7 @@ __global__ void fully_fused_projection_bwd_kernel(
         );
     } else {
         // compute from quaternions and scales
-        quat = glm::make_vec4(quats + gid * 4);
+        quat = glm::make_vec4(quats + (gid * C + cid) * 4);
         scale = glm::make_vec3(scales + gid * 3);
         quat_scale_to_covar_preci(quat, scale, &covar, nullptr);
     }
@@ -826,7 +826,7 @@ __global__ void fully_fused_projection_bwd_kernel(
     if (v_means != nullptr) {
         warpSum(v_mean, warp_group_g);
         if (warp_group_g.thread_rank() == 0) {
-            v_means += gid * 3;
+            v_means += (gid * C + cid) * 3;
             PRAGMA_UNROLL
             for (uint32_t i = 0; i < 3; i++) {
                 atomicAdd(v_means + i, v_mean[i]);
@@ -854,7 +854,7 @@ __global__ void fully_fused_projection_bwd_kernel(
         warpSum(v_quat, warp_group_g);
         warpSum(v_scale, warp_group_g);
         if (warp_group_g.thread_rank() == 0) {
-            v_quats += gid * 4;
+            v_quats += (gid * C + cid) * 4;
             v_scales += gid * 3;
             atomicAdd(v_quats, v_quat[0]);
             atomicAdd(v_quats + 1, v_quat[1]);
@@ -1056,7 +1056,7 @@ __global__ void fully_fused_projection_packed_fwd_kernel(
     glm::mat3 R;
     if (valid) {
         // shift pointers to the current camera and gaussian
-        means += col_idx * 3;
+        means += (col_idx * C + row_idx) * 3;
         viewmats += row_idx * 16;
 
         // glm is column-major but input is row-major
@@ -1091,7 +1091,7 @@ __global__ void fully_fused_projection_packed_fwd_kernel(
             );
         } else {
             // if not then compute it from quaternions and scales
-            quats += col_idx * 4;
+            quats += (col_idx * C + row_idx) * 4;
             scales += col_idx * 3;
             quat_scale_to_covar_preci(glm::make_vec4(quats), glm::make_vec3(scales),
                                       &covar, nullptr);
@@ -1314,7 +1314,7 @@ __global__ void fully_fused_projection_packed_bwd_kernel(
     const int64_t gid = gaussian_ids[idx]; // gaussian id
 
     // shift pointers to the current camera and gaussian
-    means += gid * 3;
+    means += (gid * C + cid) * 3;
     viewmats += cid * 16;
     Ks += cid * 9;
 
@@ -1356,7 +1356,7 @@ __global__ void fully_fused_projection_packed_bwd_kernel(
         );
     } else {
         // if not then compute it from quaternions and scales
-        quat = glm::make_vec4(quats + gid * 4);
+        quat = glm::make_vec4(quats + (gid * C + cid) * 4);
         scale = glm::make_vec3(scales + gid * 3);
         quat_scale_to_covar_preci(quat, scale, &covar, nullptr);
     }
@@ -1424,7 +1424,7 @@ __global__ void fully_fused_projection_packed_bwd_kernel(
         if (v_means != nullptr) {
             warpSum(v_mean, warp_group_g);
             if (warp_group_g.thread_rank() == 0) {
-                v_means += gid * 3;
+                v_means += (gid * C + cid) * 3;
                 PRAGMA_UNROLL
                 for (uint32_t i = 0; i < 3; i++) {
                     atomicAdd(v_means + i, v_mean[i]);
@@ -1452,7 +1452,7 @@ __global__ void fully_fused_projection_packed_bwd_kernel(
             warpSum(v_quat, warp_group_g);
             warpSum(v_scale, warp_group_g);
             if (warp_group_g.thread_rank() == 0) {
-                v_quats += gid * 4;
+                v_quats += (gid * C + cid) * 4;
                 v_scales += gid * 3;
                 atomicAdd(v_quats, v_quat[0]);
                 atomicAdd(v_quats + 1, v_quat[1]);

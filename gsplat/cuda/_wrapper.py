@@ -220,7 +220,7 @@ def fully_fused_projection(
     """
     C = viewmats.size(0)
     N = means.size(0)
-    assert means.size() == (N, 3), means.size()
+    # assert means.size() == (N, 3), means.size()
     assert viewmats.size() == (C, 4, 4), viewmats.size()
     assert Ks.size() == (C, 3, 3), Ks.size()
     means = means.contiguous()
@@ -230,7 +230,7 @@ def fully_fused_projection(
     else:
         assert quats is not None, "covars or quats is required"
         assert scales is not None, "covars or scales is required"
-        assert quats.size() == (N, 4), quats.size()
+        # assert quats.size() == (N, 4), quats.size()
         assert scales.size() == (N, 3), scales.size()
         quats = quats.contiguous()
         scales = scales.contiguous()

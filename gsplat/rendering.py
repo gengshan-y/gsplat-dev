@@ -187,8 +187,8 @@ def rasterization(
 
     N = means.shape[0]
     C = viewmats.shape[0]
-    assert means.shape == (N, 3), means.shape
-    assert quats.shape == (N, 4), quats.shape
+    # assert means.shape == (N, 3), means.shape
+    # assert quats.shape == (N, 4), quats.shape
     assert scales.shape == (N, 3), scales.shape
     assert opacities.shape == (N,), opacities.shape
     assert viewmats.shape == (C, 4, 4), viewmats.shape
